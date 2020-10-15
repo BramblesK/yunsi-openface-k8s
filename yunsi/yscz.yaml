@@ -1,0 +1,143 @@
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: yunsi
+spec:
+  replicas: 1
+ #restartPolicy: OnFailure
+  selector:
+    matchLabels:
+      app: yunsi
+  template:
+    metadata:
+      labels:
+        app: yunsi
+    spec:
+      containers:
+      #  rabbitmq image
+      - name: rabbitmq
+        image: rabbitmq:management
+        ports:
+        - name: r1
+          containerPort: 5671
+        - name: r2
+          containerPort: 5672
+        - name: r3
+          containerPort: 4369
+        - name: r4
+          containerPort: 25672
+        - name: r5
+          containerPort: 15671
+        - name: r6
+          containerPort: 15672
+        imagePullPolicy: Never
+        command: [ "/bin/bash","-ce","tail -f /dev/null" ]
+      # nosql image
+      - name: mongodb
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        imagePullPolicy: Never
+        command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+      # mysql image
+      - name: mysql
+        image: mysql:5.7
+        volumeMounts:
+        - name: conf
+          mountPath: /etc/mysql/conf.d
+        - name: logs
+          mountPath: /logs
+        - name: mysql
+          mountPath: /var/lib/mysql
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "123456"
+        imagePullPolicy: Never
+        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+      # bmserver image
+      - name: bmserver
+        image: bmserver:v1.1
+        volumeMounts:
+        - name: bmlog
+          mountPath: /home/app/logs
+        - name: bmupload
+          mountPath: /uploadFile
+        - name: bmconfig
+          mountPath: /data/config
+        ports: 
+        - containerPort: 8181
+        imagePullPolicy: Never
+        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+      # bsserver image
+      - name: bsserver
+        image: bsserver:v1.1
+        volumeMounts:
+        - name: bslog
+          mountPath: /home/app/logs
+        - name: bsconfig
+          mountPath: /data/config
+        ports:
+        - containerPort: 9191
+        imagePullPolicy: Never
+        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]           
+      # bmfront image
+      - name: bmfront
+        image: bmfront:v1.1
+        volumeMounts:
+        - name: video
+          mountPath: /video
+        - name: uploadfile
+          mountPath: /uploadFile
+        ports:
+        - containerPort: 8881
+        imagePullPolicy: Never
+        #command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+      # alg image
+      - name: alg
+        image: alg:v2
+        volumeMounts:
+        - name: batime
+          mountPath: /etc/localtime
+        - name: bashare
+          mountPath: /share
+        imagePullPolicy: Never
+        command: [ "cd /share/alg && ./alg_server" ]
+      volumes:
+      - name: conf
+        hostPath:
+          path: "/data/mysql/conf"
+      - name: logs
+        hostPath:
+          path: "/data/mysql/logs"
+      - name: mysql
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: bmlog
+        hostPath:
+          path: "/data/dockerdata/bmserver/logs"
+      - name: bmupload
+        hostPath:
+          path: "/data/ftpdata/uploadFile"
+      - name: bmconfig
+        hostPath:
+          path: "/data/dockerdata/bmserver/config"
+      - name: bslog
+        hostPath:
+          path: "/data/dockerdata/bsserver/logs"
+      - name: bsconfig
+        hostPath:
+          path: "/data/dockerdata/bsserver/config"
+      - name: video
+        hostPath:
+          path: "/data/ftpdata"
+      - name: uploadfile
+        hostPath:
+          path: "/data/ftpdata"
+      - name: batime
+        hostPath:
+          path: "/etc/localtime"
+      - name: bashare
+        hostPath:
+          path: "/data/yscz"          

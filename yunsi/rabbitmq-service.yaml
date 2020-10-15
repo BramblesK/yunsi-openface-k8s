@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: rabbitmq-02
+spec:
+    ports:
+    -  name: r1
+       port: 5671
+    -  name: r2
+       port: 5672
+    -  name: r3
+       port: 4369
+    -  name: r4
+       port: 25672
+    -  name: r5
+       port: 15671
+    selector: 
+        name: yunsi
